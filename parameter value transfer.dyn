@@ -1,0 +1,69 @@
+<Workspace Version="1.2.1.3083" X="-245.86" Y="70.31" zoom="0.8425" Name="Home" Description="" RunType="Automatic" RunPeriod="1000" HasRunWithoutCrash="True">
+  <NamespaceResolutionMap />
+  <Elements>
+    <DSRevitNodesUI.Categories guid="acf0f440-299d-48fd-9140-f74eef7452a9" type="DSRevitNodesUI.Categories" nickname="Categories" x="387.5" y="391" isVisible="true" isUpstreamVisible="true" lacing="Disabled" isSelectedInput="True" IsFrozen="false" isPinned="false" index="124:Doors" />
+    <DSRevitNodesUI.ElementsOfCategory guid="4d0bb8da-6a5b-43d3-8a3f-b708e489b81a" type="DSRevitNodesUI.ElementsOfCategory" nickname="All Elements of Category" x="651.5" y="391" isVisible="true" isUpstreamVisible="true" lacing="Disabled" isSelectedInput="False" IsFrozen="false" isPinned="false">
+      <PortInfo index="0" default="False" />
+    </DSRevitNodesUI.ElementsOfCategory>
+    <Dynamo.Graph.Nodes.CodeBlockNodeModel guid="9648587a-e739-4a04-8d31-417b1f912fa8" type="Dynamo.Graph.Nodes.CodeBlockNodeModel" nickname="Code Block" x="643" y="515" isVisible="true" isUpstreamVisible="true" lacing="Disabled" isSelectedInput="False" IsFrozen="false" isPinned="false" CodeText="&quot;Manufacturers Part No&quot;;" ShouldFocus="false" />
+    <Dynamo.Graph.Nodes.CustomNodes.Function guid="342e8810-1f1a-48ad-b892-81f92a1e9495" type="Dynamo.Graph.Nodes.CustomNodes.Function" nickname="Element.GetParameterValueByName(CaSe iNSeNSiTive)" x="1026.39169139466" y="75.4480712166172" isVisible="true" isUpstreamVisible="true" lacing="Shortest" isSelectedInput="False" IsFrozen="false" isPinned="false">
+      <PortInfo index="0" default="False" />
+      <PortInfo index="1" default="False" />
+      <ID value="bece2126-c136-45d7-ad58-0ce3fdd056e8" />
+      <Name value="Element.GetParameterValueByName(CaSe iNSeNSiTive)" />
+      <Description value="Get the value of one of the element's parameters. (CaSe iNSeNSiTiVe)" />
+      <Inputs>
+        <Input value="element" />
+        <Input value="parameterName" />
+      </Inputs>
+      <Outputs>
+        <Output value="Element" />
+      </Outputs>
+    </Dynamo.Graph.Nodes.CustomNodes.Function>
+    <Dynamo.Graph.Nodes.CustomNodes.Function guid="af18c4cf-cfed-43f5-8778-8eca869a82ae" type="Dynamo.Graph.Nodes.CustomNodes.Function" nickname="GetParameterValueByName(TypeOrInstance)" x="957.548961424332" y="222.629080118694" isVisible="true" isUpstreamVisible="true" lacing="Shortest" isSelectedInput="False" IsFrozen="false" isPinned="false">
+      <PortInfo index="0" default="False" />
+      <PortInfo index="1" default="False" />
+      <ID value="c00c2bbf-5ece-40fe-ae36-15a829d3c396" />
+      <Name value="GetParameterValueByName(TypeOrInstance)" />
+      <Description value="Gets a parameter value by name regardless of type or instance." />
+      <Inputs>
+        <Input value="element" />
+        <Input value="parameterName" />
+      </Inputs>
+      <Outputs>
+        <Output value="var[]..[] " />
+      </Outputs>
+    </Dynamo.Graph.Nodes.CustomNodes.Function>
+    <Dynamo.Graph.Nodes.CustomNodes.Function guid="f6856ae7-d451-4198-9f0c-b00c24ed2721" type="Dynamo.Graph.Nodes.CustomNodes.Function" nickname="SetParameterByName(TypeOrInstance)" x="1317.19287833828" y="450.522255192878" isVisible="true" isUpstreamVisible="true" lacing="Shortest" isSelectedInput="False" IsFrozen="false" isPinned="false">
+      <PortInfo index="0" default="False" />
+      <PortInfo index="1" default="False" />
+      <PortInfo index="2" default="False" />
+      <ID value="3b487eac-17b3-4deb-b0d4-3a6950286246" />
+      <Name value="SetParameterByName(TypeOrInstance)" />
+      <Description value="Set one of the element's parameters regardless of parameter type or instance." />
+      <Inputs>
+        <Input value="element" />
+        <Input value="parameterName" />
+        <Input value="value" />
+      </Inputs>
+      <Outputs>
+        <Output value="Element" />
+      </Outputs>
+    </Dynamo.Graph.Nodes.CustomNodes.Function>
+    <Dynamo.Graph.Nodes.CodeBlockNodeModel guid="a93f150f-dd11-4ffd-8461-75227c27d432" type="Dynamo.Graph.Nodes.CodeBlockNodeModel" nickname="Code Block" x="934" y="522" isVisible="true" isUpstreamVisible="true" lacing="Disabled" isSelectedInput="False" IsFrozen="false" isPinned="false" CodeText="&quot;ManufacturersPartNo&quot;;" ShouldFocus="false" />
+  </Elements>
+  <Connectors>
+    <Dynamo.Graph.Connectors.ConnectorModel start="acf0f440-299d-48fd-9140-f74eef7452a9" start_index="0" end="4d0bb8da-6a5b-43d3-8a3f-b708e489b81a" end_index="0" portType="0" />
+    <Dynamo.Graph.Connectors.ConnectorModel start="4d0bb8da-6a5b-43d3-8a3f-b708e489b81a" start_index="0" end="af18c4cf-cfed-43f5-8778-8eca869a82ae" end_index="0" portType="0" />
+    <Dynamo.Graph.Connectors.ConnectorModel start="4d0bb8da-6a5b-43d3-8a3f-b708e489b81a" start_index="0" end="f6856ae7-d451-4198-9f0c-b00c24ed2721" end_index="0" portType="0" />
+    <Dynamo.Graph.Connectors.ConnectorModel start="9648587a-e739-4a04-8d31-417b1f912fa8" start_index="0" end="af18c4cf-cfed-43f5-8778-8eca869a82ae" end_index="1" portType="0" />
+    <Dynamo.Graph.Connectors.ConnectorModel start="af18c4cf-cfed-43f5-8778-8eca869a82ae" start_index="0" end="f6856ae7-d451-4198-9f0c-b00c24ed2721" end_index="2" portType="0" />
+    <Dynamo.Graph.Connectors.ConnectorModel start="a93f150f-dd11-4ffd-8461-75227c27d432" start_index="0" end="f6856ae7-d451-4198-9f0c-b00c24ed2721" end_index="1" portType="0" />
+  </Connectors>
+  <Notes />
+  <Annotations />
+  <Presets />
+  <Cameras>
+    <Camera Name="Background Preview" eyeX="-17" eyeY="24" eyeZ="50" lookX="12" lookY="-13" lookZ="-58" upX="0" upY="1" upZ="0" />
+  </Cameras>
+</Workspace>
