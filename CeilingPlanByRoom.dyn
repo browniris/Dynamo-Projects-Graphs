@@ -1,0 +1,1218 @@
+{
+  "Uuid": "69239d34-067a-42cc-9e6c-c5d48ea93068",
+  "IsCustomNode": false,
+  "Description": null,
+  "Name": "CeilingPlanByRoom",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [
+    {
+      "Id": "529e99a3aa8c4b0494d09c1bc30ae769",
+      "Name": "Floor Plan",
+      "Type": "boolean",
+      "Value": "false",
+      "Description": "Selection between a true and false."
+    },
+    {
+      "Id": "edfd500e71c147b791d18f3a9beaa6d5",
+      "Name": "Floor Plan Prefix",
+      "Type": "string",
+      "Value": "Floor",
+      "Description": "Creates a string."
+    },
+    {
+      "Id": "1a7475ee1c0d4b39bdf99f220ac7664d",
+      "Name": "Offset",
+      "Type": "number",
+      "Value": "0.15",
+      "NumberType": "Double",
+      "Description": "Creates a number."
+    },
+    {
+      "Id": "d770f9445c08403e9a5d8fe48bbd6c8d",
+      "Name": "Sheet Name",
+      "Type": "string",
+      "Value": "Room Schedule",
+      "Description": "Creates a string."
+    },
+    {
+      "Id": "8fead1ee7ea148db81e8265f3a9428d9",
+      "Name": "File Path",
+      "Type": "string",
+      "Value": "C:\\Users\\thiru\\Desktop\\Brown Iris\\Ceiling-Floor Plan by Room\\Room Schedule.xlsx",
+      "Description": "Allows you to select a file on the system to get its filename"
+    },
+    {
+      "Id": "562c4cf060d047a29b9caf2d9d26af9f",
+      "Name": "Ceiling Plan",
+      "Type": "boolean",
+      "Value": "true",
+      "Description": "Selection between a true and false."
+    },
+    {
+      "Id": "5f499efaf1494e709424716c49cdeeb7",
+      "Name": "Ceiling Plan Prefix",
+      "Type": "string",
+      "Value": "Ceiling",
+      "Description": "Creates a string."
+    }
+  ],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Function, DynamoCore",
+      "FunctionSignature": "f21bbfb6-2679-4e23-a562-e4dc3c413316",
+      "FunctionType": "Graph",
+      "NodeType": "FunctionNode",
+      "Id": "fcec2cc2dc624c3484fe8dfdea49ef72",
+      "Inputs": [
+        {
+          "Id": "5998811170b247e1a817dcce70f8b077",
+          "Name": "NameOrNumber",
+          "Description": "string[]..[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "3c26322c1f3a4a539fbafbe2be1333b1",
+          "Name": "RoomOrSpace",
+          "Description": "Category Room = true\nCategory Space = false\n\nbool\nDefault value : true",
+          "UsingDefaultValue": true,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "2dbf9f04b8bb428484b8763b785e4d3d",
+          "Name": "docOrRevitLinkInstance",
+          "Description": "Use only if you want to query a linked model\n\nvar[]..[]\nDefault value : null",
+          "UsingDefaultValue": true,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "b322188279c840469c1cec9431ca680e",
+          "Name": "Rooms",
+          "Description": "return value",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "b983d28ab68d4d2aa9396723521a3232",
+          "Name": "Levels",
+          "Description": "return value",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Enter the room/space name or number to get the room."
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "# Copyright(c) 2015, Konrad K Sobon\r\n# @arch_laboratory, http://archi-lab.net\r\n\r\nimport clr\r\nclr.AddReference('ProtoGeometry')\r\nfrom Autodesk.DesignScript.Geometry import *\r\n\r\n# Import Element wrapper extension methods\r\nclr.AddReference(\"RevitNodes\")\r\nimport Revit\r\nclr.ImportExtensions(Revit.Elements)\r\n\r\n# Import geometry conversion extension methods\r\nclr.ImportExtensions(Revit.GeometryConversion)\r\n\r\n# Import DocumentManager and TransactionManager\r\nclr.AddReference(\"RevitServices\")\r\nimport RevitServices\r\nfrom RevitServices.Persistence import DocumentManager\r\nfrom RevitServices.Transactions import TransactionManager\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\n\r\n# Import RevitAPI\r\nclr.AddReference(\"RevitAPI\")\r\nimport Autodesk\r\nfrom Autodesk.Revit.DB import *\r\n\r\nimport System\r\nfrom System import Array\r\nfrom System.Collections.Generic import *\r\n\r\nimport sys\r\npyt_path = r'C:\\Program Files (x86)\\IronPython 2.7\\Lib'\r\nsys.path.append(pyt_path)\r\n\r\n#The inputs to this node will be stored as a list in the IN variable.\r\ndataEnteringNode = IN\r\n\r\nif isinstance(IN[0], list):\r\n\trooms = UnwrapElement(IN[0])\r\nelse:\r\n\trooms = [UnwrapElement(IN[0])]\r\nnamePrefix = IN[1]\r\nbboxOffset = IN[2]\r\nrunMe = IN[3]\r\n\r\ndef OffsetBBox(bbox, offset):\r\n\tbboxMinX = bbox.Min.X - offset\r\n\tbboxMinY = bbox.Min.Y - offset\r\n\tbboxMinZ = bbox.Min.Z - offset\r\n\tbboxMaxX = bbox.Max.X + offset\r\n\tbboxMaxY = bbox.Max.Y + offset\r\n\tbboxMaxZ = bbox.Max.Z + offset\r\n\tnewBbox = BoundingBoxXYZ()\r\n\tnewBbox.Min = XYZ(bboxMinX, bboxMinY, bboxMinZ)\r\n\tnewBbox.Max = XYZ(bboxMaxX, bboxMaxY, bboxMaxZ)\r\n\treturn newBbox\r\n\r\ntry:\r\n\terrorReport = None\r\n\tif runMe:\r\n\t\tviewTypes = FilteredElementCollector(doc).OfClass(ViewFamilyType)\r\n\t\tfor i in viewTypes:\r\n\t\t\tif i.ViewFamily == ViewFamily.CeilingPlan:\r\n\t\t\t\tviewTypeId = i.Id\r\n\t\t\t\tbreak\r\n\t\t\telse:\r\n\t\t\t\tcontinue\r\n\t\t\r\n\t\texistingPlans = FilteredElementCollector(doc).OfClass(View).ToElements()\r\n\t\t\r\n\t\texistingPlanNames, existingPlanElements = [], []\r\n\t\tfor i in existingPlans:\r\n\t\t\tif not i.IsTemplate:\r\n\t\t\t\tif i.ViewType == ViewType.CeilingPlan:\r\n\t\t\t\t\texistingPlanNames.append(i.ToDSType(True).Name)\r\n\t\t\t\t\texistingPlanElements.append(i)\r\n\t\t\t\t\t\r\n\t\t# Start Transaction\r\n\t\tTransactionManager.Instance.EnsureInTransaction(doc)\r\n\t\t\r\n\t\tfloorPlans = []\r\n\t\tfor i in rooms:\r\n\t\t\tlevelId = i.LevelId\r\n\t\t\tbbox = i.BoundingBox[doc.ActiveView]\r\n\t\t\tnewBbox = OffsetBBox(bbox, bboxOffset)\r\n\t\t\tviewName = namePrefix + \"-\" + i.get_Parameter(BuiltInParameter.ROOM_NUMBER).AsString() + \"-\" + i.get_Parameter(BuiltInParameter.ROOM_NAME).AsString()\r\n\t\t\tif viewName in existingPlanNames:\r\n\t\t\t\tview = existingPlanElements[existingPlanNames.index(viewName)]\r\n\t\t\t\tview.CropBox = newBbox\r\n\t\t\t\tview.CropBoxActive = True\r\n\t\t\t\tview.CropBoxVisible = False\r\n\t\t\t\tfloorPlans.append(view)\r\n\t\t\telse:\r\n\t\t\t\tnewView = ViewPlan.Create(doc, viewTypeId, levelId)\r\n\t\t\t\tnewView.Name = viewName\r\n\t\t\t\tnewView.CropBox = newBbox\r\n\t\t\t\tnewView.CropBoxActive = True\r\n\t\t\t\tnewView.CropBoxVisible = False\r\n\t\t\t\tfloorPlans.append(newView)\r\n\t\r\n\t\t# End Transaction\r\n\t\tTransactionManager.Instance.TransactionTaskDone()\r\n\telse:\r\n\t\terrorReport = \"Run Me set to False\"\r\nexcept:\r\n\t# if error accurs anywhere in the process catch it\r\n\timport traceback\r\n\terrorReport = traceback.format_exc()\r\n\r\n#Assign your output to the OUT variable\r\nif errorReport == None:\r\n\tOUT = floorPlans\r\nelse:\r\n\tOUT = errorReport\r\n",
+      "VariableInputPorts": true,
+      "Id": "2e75ad89c125492daaef84e726e7618e",
+      "Inputs": [
+        {
+          "Id": "f0bcaa1c571c4fe795d64b69eef0976c",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "0cf6f45add27482aac9c7dc792788a84",
+          "Name": "IN[1]",
+          "Description": "Input #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "c770181fb87542fca257220b8d875c95",
+          "Name": "IN[2]",
+          "Description": "Input #2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "33ecfcedd0b54cb5854f41dd438f31f1",
+          "Name": "IN[3]",
+          "Description": "Input #3",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "45444d9e404040a2bcf1e74fb22b2b93",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded IronPython script."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.BoolSelector, CoreNodeModels",
+      "NodeType": "BooleanInputNode",
+      "InputValue": true,
+      "Id": "53570e692e2142c69aa63ce12e56353a",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "613f10b4d3b64a31a604f9d97f8496ac",
+          "Name": "",
+          "Description": "Boolean",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Selection between a true and false."
+    },
+    {
+      "ConcreteType": "Orchid.E.RevitProject.Views.ViewTemplate, OrchidRE",
+      "SelectedIndex": 3,
+      "NodeType": "ExtensionNode",
+      "Id": "b6719f966c82405f8dfda0302f723383",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "92f263d863bd4eb5955de766e4cdf9ab",
+          "Name": "ViewTemplate",
+          "Description": "The selected ViewTemplate",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Dropdown for view templates"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "archilab.Revit.Views.Views.SetViewTemplate@Revit.Elements.Views.View,Revit.Elements.Views.View",
+      "Id": "ba8b2f5f96984b7695d45d5449398243",
+      "Inputs": [
+        {
+          "Id": "1cfe47a845814a9d9e5f252e060fece5",
+          "Name": "view",
+          "Description": "View that template will be applied to.\n\nView",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "d73418bdf7a340fbbc6e8562b9f5d186",
+          "Name": "viewTemplate",
+          "Description": "View Template that will be applied to View.\n\nView",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "148e6c60c7ef446a8d930ececfb29abc",
+          "Name": "View",
+          "Description": "View",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Set View Template for a View.\n\nViews.SetViewTemplate (view: View, viewTemplate: View): View"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Function, DynamoCore",
+      "FunctionSignature": "aa6de0ed-082c-4ecc-a410-863746b0ee55",
+      "FunctionType": "Graph",
+      "NodeType": "FunctionNode",
+      "Id": "32f7db37ed604d09b0d03a53e87bc15b",
+      "Inputs": [
+        {
+          "Id": "5857dd943763453eafd5f3558532ab69",
+          "Name": "_room",
+          "Description": "var[]..[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "61c68f6810a64ef9bc92c23ff431c4dc",
+          "Name": "_prefix",
+          "Description": "string\nDefault value : \"RDS\"",
+          "UsingDefaultValue": true,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "627febd8774945e0be23b68ddb22d3cc",
+          "Name": "_offset",
+          "Description": "int\nDefault value : 4",
+          "UsingDefaultValue": true,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "3bccd9f6f65d457384034395d60e99ae",
+          "Name": "_runIt",
+          "Description": "bool\nDefault value : false",
+          "UsingDefaultValue": true,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "7a4f945ac329456aaa9e63ce37dff386",
+          "Name": "_floorPlanView",
+          "Description": "return value",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "This node takes input of a Room and creates a Floor Plan View with Crop Box set around that room. "
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.BoolSelector, CoreNodeModels",
+      "NodeType": "BooleanInputNode",
+      "InputValue": false,
+      "Id": "529e99a3aa8c4b0494d09c1bc30ae769",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "03e6c103f09c41959d93f986f4f0167c",
+          "Name": "",
+          "Description": "Boolean",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Selection between a true and false."
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "archilab.Revit.Views.Views.SetViewTemplate@Revit.Elements.Views.View,Revit.Elements.Views.View",
+      "Id": "23e699fbcc0b47f0824b9cc7fd78e470",
+      "Inputs": [
+        {
+          "Id": "1fcad51eb19246a9a9174d7bfa1de009",
+          "Name": "view",
+          "Description": "View that template will be applied to.\n\nView",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "0e94bd4b38004eb4bab5fc50389c0cec",
+          "Name": "viewTemplate",
+          "Description": "View Template that will be applied to View.\n\nView",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "50c08bbaa6f8455fa94952dc660a2a3f",
+          "Name": "View",
+          "Description": "View",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Set View Template for a View.\n\nViews.SetViewTemplate (view: View, viewTemplate: View): View"
+    },
+    {
+      "ConcreteType": "Orchid.E.RevitProject.Views.ViewTemplate, OrchidRE",
+      "SelectedIndex": 0,
+      "NodeType": "ExtensionNode",
+      "Id": "0e563b78e9ac4c3b94a052b3254ac2dd",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "4999ff28d67d40feadee65e6b5d72aa9",
+          "Name": "ViewTemplate",
+          "Description": "The selected ViewTemplate",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Dropdown for view templates"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.StringInput, CoreNodeModels",
+      "NodeType": "StringInputNode",
+      "InputValue": "Floor",
+      "Id": "edfd500e71c147b791d18f3a9beaa6d5",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "9d7354216f934cec8e2409edcbd4a570",
+          "Name": "",
+          "Description": "String",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Creates a string."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.DoubleInput, CoreNodeModels",
+      "NodeType": "NumberInputNode",
+      "NumberType": "Double",
+      "InputValue": 0.15,
+      "Id": "1a7475ee1c0d4b39bdf99f220ac7664d",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "352a49cdc7f24d8790582174b5d69a51",
+          "Name": "",
+          "Description": "Double",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Creates a number."
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "DSOffice.Data.ImportExcel@var,string,bool,bool",
+      "Id": "1781246a44204b32b6ba15befe34c989",
+      "Inputs": [
+        {
+          "Id": "9458334b63be4ecabbca5ee2c5af71b5",
+          "Name": "file",
+          "Description": "File representing the Microsoft Excel spreadsheet.\n\nvar",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "8ba5046d4eef4deca472f5a963d76604",
+          "Name": "sheetName",
+          "Description": "Name of the worksheet containing the data.\n\nstring",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "dfad5ae6c0754d298d2ba8d0b5f261b4",
+          "Name": "readAsStrings",
+          "Description": "Toggle to switch between reading Excel file as strings.\n\nbool\nDefault value : false",
+          "UsingDefaultValue": true,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "255658767b27458e832dadea509a5e2f",
+          "Name": "showExcel",
+          "Description": "Toggle to switch between showing and hiding the main Excel window.\n\nbool\nDefault value : true",
+          "UsingDefaultValue": true,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "f5decfd62b6e440797cc38ff53c468ec",
+          "Name": "data",
+          "Description": "Rows of data from the Excel worksheet.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Read data from a Microsoft Excel spreadsheet. Data is read by row and returned in a series of lists by row. Rows and columns are zero-indexed; for example, the value in cell A1 will appear in the data list at [0,0]. This node requires Microsoft Excel to be installed.\n\nData.ImportExcel (file: var, sheetName: string, readAsStrings: bool = false, showExcel: bool = true): var[][]"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "DSCore.List.Transpose@var[]..[]",
+      "Id": "7d11f786260b469b831d0753c7b105bd",
+      "Inputs": [
+        {
+          "Id": "034b513238fa474a923e3f8ea5fceb49",
+          "Name": "lists",
+          "Description": "A list of lists to be transposed.\n\nvar[]..[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "0e0b890c979a40dc9a9276eccc09a18a",
+          "Name": "lists",
+          "Description": "A list of transposed lists.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Swaps rows and columns in a list of lists. If there are some rows that are shorter than others, null values are inserted as place holders in the resultant array such that it is always rectangular.\n\nList.Transpose (lists: var[]..[]): var[]..[]"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.StringInput, CoreNodeModels",
+      "NodeType": "StringInputNode",
+      "InputValue": "Room Schedule",
+      "Id": "d770f9445c08403e9a5d8fe48bbd6c8d",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "78112be34f654db0bcf14e9a441cf527",
+          "Name": "",
+          "Description": "String",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Creates a string."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.BoolSelector, CoreNodeModels",
+      "NodeType": "BooleanInputNode",
+      "InputValue": true,
+      "Id": "cbd8a0e096964985b02586ee6c788d95",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "9dff390e5c384b4bad5bd37cf342b592",
+          "Name": "",
+          "Description": "Boolean",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Selection between a true and false."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.BoolSelector, CoreNodeModels",
+      "NodeType": "BooleanInputNode",
+      "InputValue": false,
+      "Id": "5d245d08d8c34fd6a459627dc2244f7b",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "fa18ce20c6dd471cb05d7ba3965aa5b0",
+          "Name": "",
+          "Description": "Boolean",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Selection between a true and false."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.FileObject, CoreNodeModels",
+      "NodeType": "ExtensionNode",
+      "Id": "51147155f27f40eaaffc2e2233f4b187",
+      "Inputs": [
+        {
+          "Id": "33d1f6000924417995df356660426ffe",
+          "Name": "path",
+          "Description": "Path to the file.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "bfdd94611b66450e84b18f6ead575f36",
+          "Name": "file",
+          "Description": "File object",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Creates a file object from a path."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.Filename, CoreNodeModels",
+      "HintPath": "C:\\Users\\thiru\\Desktop\\Brown Iris\\Ceiling-Floor Plan by Room\\Room Schedule.xlsx",
+      "InputValue": "C:\\Users\\thiru\\Desktop\\Brown Iris\\Ceiling-Floor Plan by Room\\Room Schedule.xlsx",
+      "NodeType": "ExtensionNode",
+      "Id": "8fead1ee7ea148db81e8265f3a9428d9",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "11f552a43cb2475e9772688d5ac95c39",
+          "Name": "",
+          "Description": "Filename",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Allows you to select a file on the system to get its filename"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "l[0];",
+      "Id": "a0a558d949c1427b8294aaa0fc70dbca",
+      "Inputs": [
+        {
+          "Id": "fc79f0d723ba4cf3884ac9aa845522f9",
+          "Name": "l",
+          "Description": "l",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "ccbd37eae4b649a8b6824cd617431c9d",
+          "Name": "",
+          "Description": "Value of expression at line 1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Allows for DesignScript code to be authored directly"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.BoolSelector, CoreNodeModels",
+      "NodeType": "BooleanInputNode",
+      "InputValue": true,
+      "Id": "562c4cf060d047a29b9caf2d9d26af9f",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "6bfe7001012c47f9bc44a3b7eb2fe728",
+          "Name": "",
+          "Description": "Boolean",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Selection between a true and false."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.StringInput, CoreNodeModels",
+      "NodeType": "StringInputNode",
+      "InputValue": "Ceiling",
+      "Id": "5f499efaf1494e709424716c49cdeeb7",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "098bcf63efbe4203b9337f5115442295",
+          "Name": "",
+          "Description": "String",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Creates a string."
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "b322188279c840469c1cec9431ca680e",
+      "End": "f0bcaa1c571c4fe795d64b69eef0976c",
+      "Id": "88efc747c6754c4ea912d4320e93043a"
+    },
+    {
+      "Start": "b322188279c840469c1cec9431ca680e",
+      "End": "5857dd943763453eafd5f3558532ab69",
+      "Id": "cba14f2bae4c4d9b98dbb06b897e9148"
+    },
+    {
+      "Start": "45444d9e404040a2bcf1e74fb22b2b93",
+      "End": "1cfe47a845814a9d9e5f252e060fece5",
+      "Id": "199307385eda4910897256f857312dfd"
+    },
+    {
+      "Start": "613f10b4d3b64a31a604f9d97f8496ac",
+      "End": "3c26322c1f3a4a539fbafbe2be1333b1",
+      "Id": "1c2eb433adac4111b350ce2e7f80aa34"
+    },
+    {
+      "Start": "92f263d863bd4eb5955de766e4cdf9ab",
+      "End": "d73418bdf7a340fbbc6e8562b9f5d186",
+      "Id": "e87e677171544daaa11feb97a5981aab"
+    },
+    {
+      "Start": "7a4f945ac329456aaa9e63ce37dff386",
+      "End": "1fcad51eb19246a9a9174d7bfa1de009",
+      "Id": "aa1d554643594b16bebeffd5e3ce835c"
+    },
+    {
+      "Start": "03e6c103f09c41959d93f986f4f0167c",
+      "End": "3bccd9f6f65d457384034395d60e99ae",
+      "Id": "7d666697bfaf4c279c4315bbc245b7b0"
+    },
+    {
+      "Start": "4999ff28d67d40feadee65e6b5d72aa9",
+      "End": "0e94bd4b38004eb4bab5fc50389c0cec",
+      "Id": "7ba77b877c6f4e519879e8433032d239"
+    },
+    {
+      "Start": "9d7354216f934cec8e2409edcbd4a570",
+      "End": "61c68f6810a64ef9bc92c23ff431c4dc",
+      "Id": "efe4ade3f032416a9b1ed1460cedf459"
+    },
+    {
+      "Start": "352a49cdc7f24d8790582174b5d69a51",
+      "End": "627febd8774945e0be23b68ddb22d3cc",
+      "Id": "d0c519922db4479583ec46232f28bbfe"
+    },
+    {
+      "Start": "352a49cdc7f24d8790582174b5d69a51",
+      "End": "c770181fb87542fca257220b8d875c95",
+      "Id": "9946051ca442453fa0c8624ac8009bc2"
+    },
+    {
+      "Start": "f5decfd62b6e440797cc38ff53c468ec",
+      "End": "034b513238fa474a923e3f8ea5fceb49",
+      "Id": "210922e6eb154f1ab984c1104b3c9b19"
+    },
+    {
+      "Start": "0e0b890c979a40dc9a9276eccc09a18a",
+      "End": "fc79f0d723ba4cf3884ac9aa845522f9",
+      "Id": "afac4187d3a142e0a0c0b91770e05cce"
+    },
+    {
+      "Start": "78112be34f654db0bcf14e9a441cf527",
+      "End": "8ba5046d4eef4deca472f5a963d76604",
+      "Id": "589a37c952324afc8b60efa526f8eef6"
+    },
+    {
+      "Start": "9dff390e5c384b4bad5bd37cf342b592",
+      "End": "dfad5ae6c0754d298d2ba8d0b5f261b4",
+      "Id": "7d9adcd770ce4f14b5071fac16a3d508"
+    },
+    {
+      "Start": "fa18ce20c6dd471cb05d7ba3965aa5b0",
+      "End": "255658767b27458e832dadea509a5e2f",
+      "Id": "68986bb798d7484c9a733bc04d2eda02"
+    },
+    {
+      "Start": "bfdd94611b66450e84b18f6ead575f36",
+      "End": "9458334b63be4ecabbca5ee2c5af71b5",
+      "Id": "63aec4acb19e44ee9dba0e7afa803069"
+    },
+    {
+      "Start": "11f552a43cb2475e9772688d5ac95c39",
+      "End": "33d1f6000924417995df356660426ffe",
+      "Id": "f946834d56734cbfa7652a73e52f8be0"
+    },
+    {
+      "Start": "ccbd37eae4b649a8b6824cd617431c9d",
+      "End": "5998811170b247e1a817dcce70f8b077",
+      "Id": "0eb2a13984f24ae69ceaaf76b2236457"
+    },
+    {
+      "Start": "6bfe7001012c47f9bc44a3b7eb2fe728",
+      "End": "33ecfcedd0b54cb5854f41dd438f31f1",
+      "Id": "bad8849f88e1420893f282073081b2af"
+    },
+    {
+      "Start": "098bcf63efbe4203b9337f5115442295",
+      "End": "0cf6f45add27482aac9c7dc792788a84",
+      "Id": "55949891bd5f4cbfa3f5e4447fa18c52"
+    }
+  ],
+  "Dependencies": [
+    "f21bbfb6-2679-4e23-a562-e4dc3c413316",
+    "aa6de0ed-082c-4ecc-a410-863746b0ee55"
+  ],
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": true,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.0.4.12684",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "Background Preview",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "NodeViews": [
+      {
+        "Id": "fcec2cc2dc624c3484fe8dfdea49ef72",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Get rooms by name or number",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": -127.81028005877636,
+        "Y": 141.30522755016284
+      },
+      {
+        "Id": "2e75ad89c125492daaef84e726e7618e",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Python Script",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 1066.1102196594793,
+        "Y": 402.09224016448059
+      },
+      {
+        "Id": "53570e692e2142c69aa63ce12e56353a",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Boolean",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": -398.9605273406454,
+        "Y": 250.69811261089205
+      },
+      {
+        "Id": "b6719f966c82405f8dfda0302f723383",
+        "IsSetAsInput": true,
+        "IsSetAsOutput": false,
+        "Name": "Ceiling Templates",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 997.54596648822292,
+        "Y": 626.54962482151052
+      },
+      {
+        "Id": "ba8b2f5f96984b7695d45d5449398243",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Views.SetViewTemplate",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 1433.5110396008,
+        "Y": 397.10846264236511
+      },
+      {
+        "Id": "32f7db37ed604d09b0d03a53e87bc15b",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "FloorPlan.ByRoom",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 956.55758611805231,
+        "Y": -111.12406872267664
+      },
+      {
+        "Id": "529e99a3aa8c4b0494d09c1bc30ae769",
+        "IsSetAsInput": true,
+        "IsSetAsOutput": false,
+        "Name": "Floor Plan",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": -1081.0985728161452,
+        "Y": -75.93015142554782
+      },
+      {
+        "Id": "23e699fbcc0b47f0824b9cc7fd78e470",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Views.SetViewTemplate",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 1411.718111487613,
+        "Y": -109.84038467057891
+      },
+      {
+        "Id": "0e563b78e9ac4c3b94a052b3254ac2dd",
+        "IsSetAsInput": true,
+        "IsSetAsOutput": false,
+        "Name": "Floor Templates",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 941.4029283794132,
+        "Y": 119.11597229603285
+      },
+      {
+        "Id": "edfd500e71c147b791d18f3a9beaa6d5",
+        "IsSetAsInput": true,
+        "IsSetAsOutput": false,
+        "Name": "Floor Plan Prefix",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": -1062.8648225787808,
+        "Y": 588.91349264569362
+      },
+      {
+        "Id": "1a7475ee1c0d4b39bdf99f220ac7664d",
+        "IsSetAsInput": true,
+        "IsSetAsOutput": false,
+        "Name": "Offset",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": -1033.8392076610951,
+        "Y": 71.638210385961116
+      },
+      {
+        "Id": "1781246a44204b32b6ba15befe34c989",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Data.ImportExcel",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": -876.00538416361235,
+        "Y": 156.52742752776444
+      },
+      {
+        "Id": "7d11f786260b469b831d0753c7b105bd",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "List.Transpose",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": -581.08545810798216,
+        "Y": 156.95976470369271
+      },
+      {
+        "Id": "d770f9445c08403e9a5d8fe48bbd6c8d",
+        "IsSetAsInput": true,
+        "IsSetAsOutput": false,
+        "Name": "Sheet Name",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": -1030.3578475320769,
+        "Y": 240.59810357939159
+      },
+      {
+        "Id": "cbd8a0e096964985b02586ee6c788d95",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Boolean",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": -1095.3578475320769,
+        "Y": 304.08177208152591
+      },
+      {
+        "Id": "5d245d08d8c34fd6a459627dc2244f7b",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Boolean",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": -1095.3578475320769,
+        "Y": 364.84392087758488
+      },
+      {
+        "Id": "51147155f27f40eaaffc2e2233f4b187",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "File From Path",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": -1070.3578475320769,
+        "Y": 154.93831594574476
+      },
+      {
+        "Id": "8fead1ee7ea148db81e8265f3a9428d9",
+        "IsSetAsInput": true,
+        "IsSetAsOutput": false,
+        "Name": "File Path",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": -1255.28279491722,
+        "Y": 154.41628920798365
+      },
+      {
+        "Id": "a0a558d949c1427b8294aaa0fc70dbca",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Code Block",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": -357.28415816990264,
+        "Y": 160.59302574588395
+      },
+      {
+        "Id": "562c4cf060d047a29b9caf2d9d26af9f",
+        "IsSetAsInput": true,
+        "IsSetAsOutput": false,
+        "Name": "Ceiling Plan",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": -1068.5878840409318,
+        "Y": 810.80243440597633
+      },
+      {
+        "Id": "5f499efaf1494e709424716c49cdeeb7",
+        "IsSetAsInput": true,
+        "IsSetAsOutput": false,
+        "Name": "Ceiling Plan Prefix",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": -1071.1159217071709,
+        "Y": 530.61840078443606
+      }
+    ],
+    "Annotations": [
+      {
+        "Id": "ac2b9ff267c948489d09ab9899e0e272",
+        "Title": "Run Floor Plan",
+        "Nodes": [
+          "529e99a3aa8c4b0494d09c1bc30ae769"
+        ],
+        "Left": -1091.0985728161452,
+        "Top": -171.93015142554782,
+        "Width": 155.0,
+        "Height": 164.0,
+        "FontSize": 36.0,
+        "InitialTop": -75.93015142554782,
+        "InitialHeight": 145.0,
+        "TextblockHeight": 86.0,
+        "Background": "#FFC1D676"
+      },
+      {
+        "Id": "26afa5c705574792a184c5873c6d0b3c",
+        "Title": "Run Ceiling Plan",
+        "Nodes": [
+          "562c4cf060d047a29b9caf2d9d26af9f"
+        ],
+        "Left": -1078.5878840409318,
+        "Top": 670.80243440597633,
+        "Width": 155.0,
+        "Height": 208.0,
+        "FontSize": 36.0,
+        "InitialTop": 810.80243440597633,
+        "InitialHeight": 145.0,
+        "TextblockHeight": 130.0,
+        "Background": "#FFC1D676"
+      },
+      {
+        "Id": "7a456588804e4a5b80345429707e8d6b",
+        "Title": "Offset",
+        "Nodes": [
+          "1a7475ee1c0d4b39bdf99f220ac7664d"
+        ],
+        "Left": -1043.8392076610951,
+        "Top": 18.638210385961116,
+        "Width": 105.97666666666667,
+        "Height": 121.0,
+        "FontSize": 36.0,
+        "InitialTop": 71.638210385961116,
+        "InitialHeight": 145.0,
+        "TextblockHeight": 43.0,
+        "Background": "#FFC1D676"
+      },
+      {
+        "Id": "dcec933f44f74e6bb2e80ef63d242c76",
+        "Title": "Prifix",
+        "Nodes": [
+          "edfd500e71c147b791d18f3a9beaa6d5",
+          "5f499efaf1494e709424716c49cdeeb7"
+        ],
+        "Left": -1081.1159217071709,
+        "Top": 477.61840078443606,
+        "Width": 141.25109912839002,
+        "Height": 179.29509186125756,
+        "FontSize": 36.0,
+        "InitialTop": 530.61840078443606,
+        "InitialHeight": 203.29509186125756,
+        "TextblockHeight": 43.0,
+        "Background": "#FFC1D676"
+      },
+      {
+        "Id": "4ab39c5f41864f48a197470031d8aa42",
+        "Title": "Custom Node: GeniusLoci v.2021.2.18",
+        "Nodes": [],
+        "Left": -86.772966557808331,
+        "Top": 89.9863137769247,
+        "Width": 0.0,
+        "Height": 0.0,
+        "FontSize": 36.0,
+        "InitialTop": 0.0,
+        "InitialHeight": 0.0,
+        "TextblockHeight": 0.0,
+        "Background": "#FFC1D676"
+      },
+      {
+        "Id": "6dbb8a924b30425e81c585731b3b5fc1",
+        "Title": "Custom Node: Orchid v. 204.1.4.7584",
+        "Nodes": [],
+        "Left": 997.54596648822292,
+        "Top": 591.54962482151052,
+        "Width": 0.0,
+        "Height": 0.0,
+        "FontSize": 36.0,
+        "InitialTop": 0.0,
+        "InitialHeight": 0.0,
+        "TextblockHeight": 0.0,
+        "Background": "#FFC1D676"
+      },
+      {
+        "Id": "87cdce100c95444daf9358a2ac53ea1e",
+        "Title": "Custom Node: archilab v.2020.23.9",
+        "Nodes": [],
+        "Left": 1433.5110396008,
+        "Top": 362.10846264236511,
+        "Width": 0.0,
+        "Height": 0.0,
+        "FontSize": 36.0,
+        "InitialTop": 0.0,
+        "InitialHeight": 0.0,
+        "TextblockHeight": 0.0,
+        "Background": "#FFC1D676"
+      },
+      {
+        "Id": "14ba6f05fa7b4c1186c9aaae6cb62d72",
+        "Title": "Custom Node: archilab v.2020.23.9",
+        "Nodes": [],
+        "Left": 956.55758611805231,
+        "Top": -146.12406872267664,
+        "Width": 0.0,
+        "Height": 0.0,
+        "FontSize": 36.0,
+        "InitialTop": 0.0,
+        "InitialHeight": 0.0,
+        "TextblockHeight": 0.0,
+        "Background": "#FFC1D676"
+      },
+      {
+        "Id": "bffdd0caffa846c191565a7e4659c2db",
+        "Title": "Custom Node: archilab v.2020.23.9",
+        "Nodes": [],
+        "Left": 1411.718111487613,
+        "Top": -144.84038467057891,
+        "Width": 0.0,
+        "Height": 0.0,
+        "FontSize": 36.0,
+        "InitialTop": 0.0,
+        "InitialHeight": 0.0,
+        "TextblockHeight": 0.0,
+        "Background": "#FFC1D676"
+      },
+      {
+        "Id": "095cf63d31f24d33a8947559ad30a252",
+        "Title": "Custom Node: Orchid v. 204.1.4.7584",
+        "Nodes": [],
+        "Left": 946.15489742952263,
+        "Top": 84.115972296032851,
+        "Width": 0.0,
+        "Height": 0.0,
+        "FontSize": 36.0,
+        "InitialTop": 0.0,
+        "InitialHeight": 0.0,
+        "TextblockHeight": 0.0,
+        "Background": "#FFC1D676"
+      },
+      {
+        "Id": "f1da5c7a099a496daf8e83cc3ba3489d",
+        "Title": "Brown Iris Note\r\n****************\r\n\r\nDynamo Core 2.0.4\r\n\r\nUsed Packages:\r\nGeniusLoci v.2021.2.18\nOrchid v. 204.1.4.7584\narchilab v.2020.23.9",
+        "Nodes": [],
+        "Left": -1263.2490603798476,
+        "Top": 282.75806230944556,
+        "Width": 0.0,
+        "Height": 0.0,
+        "FontSize": 36.0,
+        "InitialTop": 0.0,
+        "InitialHeight": 0.0,
+        "TextblockHeight": 0.0,
+        "Background": "#FFC1D676"
+      }
+    ],
+    "X": -772.75616297160718,
+    "Y": -336.19632953042668,
+    "Zoom": 1.0218776282650976
+  }
+}
